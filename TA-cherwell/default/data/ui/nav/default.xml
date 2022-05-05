@@ -1,0 +1,5 @@
+<nav search_view="search">
+<view name="configuration" default="true" />
+<view name="inputs"/>
+<view name="search" label="Search"/>
+</nav>

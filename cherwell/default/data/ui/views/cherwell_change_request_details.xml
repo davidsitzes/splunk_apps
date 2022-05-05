@@ -1,0 +1,129 @@
+<form version="1.1" theme="dark">
+  <label>Change Request Details</label>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label>Time</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="cherwell_instance" searchWhenChanged="true">
+      <label>Cherwell Instance</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cherwell_instance</fieldForLabel>
+      <fieldForValue>cherwell_instance</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest"| dedup cherwell_instance | table cherwell_instance</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="owner">
+      <label>Owner</label>
+      <prefix>OwnedBy=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR OwnedBy=</delimiter>
+      <fieldForLabel>OwnedBy</fieldForLabel>
+      <fieldForValue>OwnedBy</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$" | eval OwnedBy = if(OwnedBy!="", OwnedBy, "Unassigned") | dedup OwnedBy | table OwnedBy</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="multiselect" token="ownedbyteam">
+      <label>Owned By Team</label>
+      <prefix>OwnedByTeam=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR OwnedByTeam=</delimiter>
+      <fieldForLabel>OwnedByTeam</fieldForLabel>
+      <fieldForValue>OwnedByTeam</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$" | eval OwnedByTeam = if(OwnedByTeam!="", OwnedByTeam, "Unassigned") | dedup OwnedByTeam | table OwnedByTeam</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="status">
+      <label>Status</label>
+      <prefix>Status=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR Status=</delimiter>
+      <fieldForLabel>Status</fieldForLabel>
+      <fieldForValue>Status</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$" | dedup Status | table Status</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="priority">
+      <label>Priority</label>
+      <prefix>Priority=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR Priority=</delimiter>
+      <fieldForLabel>Priority</fieldForLabel>
+      <fieldForValue>Priority</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$"  Priority!=""| dedup Priority | table Priority</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="type">
+      <label>Type</label>
+      <prefix>Type=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR Type=</delimiter>
+      <fieldForLabel>Type</fieldForLabel>
+      <fieldForValue>Type</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$" Priority!=""| dedup Type | table Type</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Change Request Details</title>
+      <table>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$" ($status$) ($priority$) ($type$) | fields busObRecId,OwnedBy,Status,Priority,ChangeID,Type,OwnedByTeam,ProposedStartDate,ScheduledEndDate,Title,_time | dedup busObRecId | eval OwnedBy = if(OwnedBy!="", OwnedBy, "Unassigned") | eval OwnedByTeam = if(OwnedByTeam!="", OwnedByTeam, "Unassigned") | search ($owner$) ($ownedbyteam$) | stats latest(OwnedBy) as Owner, latest(OwnedByTeam) as "Owned By Team", latest(ProposedStartDate) as "Proposed Start Date", latest(ScheduledEndDate) as "Scheduled End Date", latest(Title) as "Title", latest(Type) as Type, latest(Status) as Status, latest(Priority) as Priority by ChangeID</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <format type="color" field="Priority">
+          <colorPalette type="map">{"Urgent":#ff6666,"High":#ffaa80, "Normal": #ffe6b3, "Low": #fff7e6}</colorPalette>
+        </format>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Closed":#77b300,"Resolved":#e6ffb3}</colorPalette>
+        </format>
+        <format type="color" field="Type">
+          <colorPalette type="map">{"Emergency":#dc4e41,"Standard":#f8be34, "Normal": #006d9c}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

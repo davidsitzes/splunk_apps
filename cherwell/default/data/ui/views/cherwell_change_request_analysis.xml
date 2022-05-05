@@ -1,0 +1,80 @@
+<form version="1.1" theme="dark">
+  <label>Change Request Analysis</label>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label>Time</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="cherwell_instance" searchWhenChanged="true">
+      <label>Cherwell Instance</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cherwell_instance</fieldForLabel>
+      <fieldForValue>cherwell_instance</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest"| dedup cherwell_instance | table cherwell_instance</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Open Change Requests By Team</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest"  cherwell_instance="$cherwell_instance$" | dedup ChangeID | search (Status!="Closed" AND Status!="Resolved") | eval Team=if( OwnedByTeam!="", OwnedByTeam,  "Unassigned" ) | chart dc(ChangeID) as Count by Team</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Open Change Requests By Priority</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest"  cherwell_instance="$cherwell_instance$" | dedup ChangeID | search (Status!="Closed" AND Status!="Resolved") | eval Priority=if(Priority="","None",Priority)| chart dc(ChangeID) as Count by Priority</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Change Requests Count By Status Over Time</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest" cherwell_instance="$cherwell_instance$" | eval date=strftime(_time, "%Y/%m/%d") | dedup date, ChangeID | timechart span=1d count(ChangeID) as "Incident count" by Status</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Open Change Requests By Team Over Time</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:ChangeRequest"  cherwell_instance="$cherwell_instance$" | dedup ChangeID | search (Status!="Closed" AND Status!="Resolved") | eval Team=if( OwnedByTeam!="", OwnedByTeam,  "Unassigned" ) | timechart span=1d dc(ChangeID) as Count by Team</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.chart">line</option>
+      </chart>
+    </panel>
+  </row>
+</form>

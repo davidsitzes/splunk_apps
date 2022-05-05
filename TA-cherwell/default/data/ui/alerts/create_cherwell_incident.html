@@ -1,0 +1,40 @@
+<form class="form-horizontal form-complex">
+<div class="control-group">
+    <label class="control-label" for="cherwell_account">Cherwell Account<span class="required">*</span> </label>
+    <div class="controls">
+    <splunk-search-dropdown name="action.create_cherwell_incident.param.account" search="| rest /servicesNS/nobody/TA-cherwell/admin/TA_cherwell_account | dedup title" value-field="title" label-field="title" id="cherwell_account" />
+    </div>
+</div>
+<div class="control-group">
+    <label class="control-label" for="create_cherwell_incident_short_description">Short Description <span class="required">*</span> </label>
+    <div class="controls">
+    <input type="text" name="action.create_cherwell_incident.param.short_description" id="create_cherwell_incident_short_description"/>
+    </div>
+</div>
+<div class="control-group">
+    <label class="control-label" for="create_cherwell_incident_description">Description <span class="required">*</span> </label>
+    <div class="controls">
+    <input type="text" name="action.create_cherwell_incident.param.description" id="create_cherwell_incident_description"/>
+    </div>
+</div>
+<div class="control-group">
+    <label class="control-label" for="create_cherwell_incident_priority">Priority <span class="required">*</span> </label>
+    <div class="controls">
+        <select name="action.create_cherwell_incident.param.priority" id="create_cherwell_incident_priority">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+        </select>
+        <span class="help-block"> 
+                    Priority level should be 1-4. Default value is 2.
+        </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="create_cherwell_incident_splunk_url">Splunk URL </label>
+    <div class="controls">
+	<input type="text" name="action.create_cherwell_incident.param.splunk_url" id="create_cherwell_incident_splunk_url"/>
+    </div>
+</div>
+</form>

@@ -1,0 +1,133 @@
+<form version="1.1" theme="dark">
+  <label>Splunk Created Incidents</label>
+  <search id="baseSearch">
+    <query>`cherwell_index` sourcetype="cherwell:bo:Incident" cherwell_instance="$cherwell_instance$" CustomerDisplayName="*Splunk*" IncidentType=Incident | dedup busObRecId | fields busObRecId,Status,IncidentType,IncidentID, SLAResolveByDeadline,OwnedBy,Priority</query>
+    <earliest>$earliest$</earliest>
+    <latest>$latest$</latest>
+  </search>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label>Time</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="cherwell_instance" searchWhenChanged="true">
+      <label>Cherwell Instance</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cherwell_instance</fieldForLabel>
+      <fieldForValue>cherwell_instance</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:incident" IncidentType=Incident | dedup cherwell_instance | table cherwell_instance</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Total Incidents</title>
+      <single>
+        <search base="baseSearch">
+          <query> stats dc(IncidentID)</query>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Open Incidents</title>
+      <single>
+        <search base="baseSearch">
+          <query>search Status!="Closed" AND Status!="Resolved" | stats count</query>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Overdue Incidents</title>
+      <single>
+        <search base="baseSearch">
+          <query>search Status!=Closed Status!=Resolved Status!="In Cart" | eval resolved_epoch=strptime(SLAResolveByDeadline,"%m/%d/%Y %I:%M:%S %p") | eval tnow = now() | where resolved_epoch&lt;tnow | stats count</query>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Pending Incidents</title>
+      <single>
+        <search base="baseSearch">
+          <query> search Status=Pending | stats count</query>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Unowned Incidents</title>
+      <single>
+        <search base="baseSearch">
+          <query>search OwnedBy="" Status!="Closed" Status!="Resolved" Status!="In Cart" | stats count</query>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Open Incidents In Life Cycle</title>
+      <chart>
+        <search base="baseSearch">
+          <query>search Status!="Closed" AND Status!="Resolved" | stats count by Status</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Open Incidents By Priority</title>
+      <chart>
+        <search base="baseSearch">
+          <query> search Status!="Closed" AND Status!="Resolved" | stats count by Priority</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Open Incidents Over Time</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:incident" CustomerDisplayName="*Splunk*" cherwell_instance="$cherwell_instance$" | search (IncidentType=Incident) Status!="Resolved" AND Status!="Closed" AND Status!="In Cart" | eval time=strftime(strptime(CreatedDateTime,"%m/%d/%Y %I:%M:%S %p"), "%m/%d/%Y") | chart count(IncidentID) as "Open Incidents" over time</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.chart">line</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Resolved/Closed Incidents Over Time</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:incident" CustomerDisplayName="*Splunk*" cherwell_instance="$cherwell_instance$" | search (IncidentType=Incident) Status="Resolved" OR Status="Closed" OR Status="In Cart" | eval time=strftime(strptime(Stat_DateTimeResolved,"%m/%d/%Y %I:%M:%S %p"), "%m/%d/%Y") | chart count(IncidentID) as "Resolved/Closed Incidents" over time</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.chart">line</option>
+      </chart>
+    </panel>
+  </row>
+</form>

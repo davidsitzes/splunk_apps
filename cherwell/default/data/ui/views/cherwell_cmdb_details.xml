@@ -1,0 +1,92 @@
+<form version="1.1" theme="dark">
+  <label>CMDB Details</label>
+  <fieldset submitButton="false">
+    <input type="time" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="cherwell_instance" searchWhenChanged="true">
+      <label>Cherwell Instance</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cherwell_instance</fieldForLabel>
+      <fieldForValue>cherwell_instance</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:configurationitem" | dedup cherwell_instance | table cherwell_instance</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="ci_status" searchWhenChanged="true">
+      <label>Status</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <prefix>AssetStatus=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR AssetStatus=</delimiter>
+      <fieldForLabel>AssetStatus</fieldForLabel>
+      <fieldForValue>AssetStatus</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:configurationitem" cherwell_instance="$cherwell_instance$" | dedup AssetStatus | table AssetStatus</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="owner" searchWhenChanged="true">
+      <label>Owner</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <prefix>OwnedBy=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR OwnedBy=</delimiter>
+      <fieldForLabel>OwnedBy</fieldForLabel>
+      <fieldForValue>OwnedBy</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:configurationitem" cherwell_instance="$cherwell_instance$" | eval OwnedBy = if(OwnedBy!="", OwnedBy, "Unassigned") | dedup OwnedBy | table OwnedBy</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="ownedbyteam" searchWhenChanged="true">
+      <label>Owned By Team</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <prefix>OwnedByTeam=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR OwnedByTeam=</delimiter>
+      <fieldForLabel>OwnedByTeam</fieldForLabel>
+      <fieldForValue>OwnedByTeam</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:configurationitem" cherwell_instance="$cherwell_instance$" | eval OwnedByTeam = if(OwnedByTeam!="", OwnedByTeam, "Unassigned") | dedup OwnedByTeam | table OwnedByTeam</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>CI Details</title>
+      <table>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:configurationitem" cherwell_instance="$cherwell_instance$" | dedup busObRecId | rex field=ConfigurationItemTypeName mode=sed "s/Config - //g" | eval OwnedBy = if(OwnedBy!="", OwnedBy, "Unassigned") | eval OwnedByTeam = if(OwnedByTeam!="", OwnedByTeam, "Unassigned")| eval Manufacturer = if(Manufacturer!="", Manufacturer, "Unknown")| eval Vendor = if(Vendor!="", Vendor, "Unknown")| eval IPAddress = if(IPAddress!="", IPAddress, "Unknown")| eval MACAddress = if(MACAddress!="", MACAddress, "Unknown")| eval HostName = if(HostName!="", HostName, "Unknown") | search ($ci_status$) ($owner$) ($ownedbyteam$) | stats latest(ConfigurationItemTypeID) as "ID", latest(ConfigurationItemTypeName) as "Type", latest(Manufacturer) as "Manufacturer", latest(Vendor) as Vendor, latest(AssetStatus) as "Status", latest(IPAddress) as "IP Address", latest(MACAddress) as "MAC Address", latest(HostName) as "Host Name" latest(OwnedBy) as "Owner", latest(OwnedByTeam) as "Owned By Team" by busObRecId | fields - busObRecId</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

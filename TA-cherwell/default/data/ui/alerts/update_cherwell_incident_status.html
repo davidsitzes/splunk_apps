@@ -1,0 +1,8 @@
+<form class="form-horizontal form-complex">
+<div class="control-group">
+    <label class="control-label" for="cherwell_account">Cherwell Account<span class="required">*</span> </label>
+    <div class="controls">
+    <splunk-search-dropdown name="action.update_cherwell_incident_status.param.account" search="| rest /servicesNS/nobody/TA-cherwell/admin/TA_cherwell_account | dedup title" value-field="title" label-field="title" id="cherwell_account" />
+    </div>
+</div>
+</form>

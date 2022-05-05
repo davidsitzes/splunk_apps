@@ -1,0 +1,107 @@
+<form version="1.1" theme="dark">
+  <label>Task Details</label>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label>Time</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="cherwell_instance" searchWhenChanged="true">
+      <label>Cherwell Instance</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cherwell_instance</fieldForLabel>
+      <fieldForValue>cherwell_instance</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:Task"| dedup cherwell_instance | table cherwell_instance</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="owner">
+      <label>Owner</label>
+      <prefix>OwnedBy=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR OwnedBy=</delimiter>
+      <fieldForLabel>OwnedBy</fieldForLabel>
+      <fieldForValue>OwnedBy</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:Task" cherwell_instance="$cherwell_instance$" | eval OwnedBy = if(OwnedBy!="", OwnedBy, "Unassigned") | dedup OwnedBy | table OwnedBy</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="multiselect" token="ownedbyteam">
+      <label>Owned By Team</label>
+      <prefix>OwnedByTeam=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR OwnedByTeam=</delimiter>
+      <fieldForLabel>OwnedByTeam</fieldForLabel>
+      <fieldForValue>OwnedByTeam</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:Task" cherwell_instance="$cherwell_instance$" | eval OwnedByTeam = if(OwnedByTeam!="", OwnedByTeam, "Unassigned") | dedup OwnedByTeam | table OwnedByTeam</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="status">
+      <label>Status</label>
+      <prefix>Status=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR Status=</delimiter>
+      <fieldForLabel>Status</fieldForLabel>
+      <fieldForValue>Status</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:Task" cherwell_instance="$cherwell_instance$" | dedup Status | table Status</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="title">
+      <label>Title</label>
+      <prefix>Title=</prefix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR Title=</delimiter>
+      <fieldForLabel>Title</fieldForLabel>
+      <fieldForValue>Title</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:Task" cherwell_instance="$cherwell_instance$" Title!=""| dedup Title | table Title</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Task Details</title>
+      <table>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:Task" cherwell_instance="$cherwell_instance$" ($status$) ($title$) |fields OwnedBy,Status,OwnedByTeam,busObRecId,Title,CreatedDateTime,ClosedDateTime,Status,TaskID |dedup busObRecId | eval OwnedBy = if(OwnedBy!="", OwnedBy, "Unassigned") | eval OwnedByTeam = if(OwnedByTeam!="", OwnedByTeam, "Unassigned") | search ($owner$) ($ownedbyteam$) | stats latest(OwnedBy) as Owner, latest(OwnedByTeam) as "Owned By Team", latest(Title) as Title, latest(CreatedDateTime) as "Created Date Time", latest(ClosedDateTime) as "Closed Date Time", latest(Status) as Status by TaskID</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Closed":#77b300,"Resolved":#e6ffb3}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

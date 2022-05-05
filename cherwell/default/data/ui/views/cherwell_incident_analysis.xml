@@ -1,0 +1,126 @@
+<form version="1.1" theme="dark">
+  <label>Incident Analysis</label>
+  <search id="baseSearch">
+    <query>`cherwell_index` sourcetype="cherwell:bo:incident"  cherwell_instance="$cherwell_instance$" | dedup busObRecId | fields busObRecId,Status,IncidentType,OwnedByTeam,Priority,Category </query>
+    <earliest>$earliest$</earliest>
+    <latest>$latest$</latest>
+  </search>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label>Time</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="cherwell_instance" searchWhenChanged="true">
+      <label>Cherwell Instance</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cherwell_instance</fieldForLabel>
+      <fieldForValue>cherwell_instance</fieldForValue>
+      <search>
+        <query>`cherwell_index` sourcetype="cherwell:bo:incident" IncidentType=Incident | dedup cherwell_instance | table cherwell_instance</query>
+        <earliest>$earliest$</earliest>
+        <latest>$latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Open Incidents By Team</title>
+      <chart>
+        <search base="baseSearch">
+          <query> search (IncidentType=Incident) AND (Status!="Closed" AND Status!="Resolved") | eval Team=if( OwnedByTeam!="", OwnedByTeam,  "Unassigned" ) | chart count by Team</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Open Incidents By Priority</title>
+      <chart>
+        <search base="baseSearch">
+          <query>search  IncidentType=Incident (Status!="Closed" AND Status!="Resolved") | stats count by Priority</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Open Incidents By Category</title>
+      <chart>
+        <search base="baseSearch">
+          <query>search  IncidentType=Incident (Status!="Closed" AND Status!="Resolved") | eval Category=if(Category=="","None",Category)| stats count by Category</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Incident Count By Status Over Time</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:incident" cherwell_instance="$cherwell_instance$" IncidentType=Incident | eval date=strftime(_time, "%Y/%m/%d") | dedup date, IncidentID | timechart span=1d count(IncidentID) as "Incident count" by Status</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Average Incident Closure Time (In Hours)</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:incident"  cherwell_instance="$cherwell_instance$" | dedup IncidentID | search Status=Closed IncidentType=Incident | eval closureTime=(strptime(ClosedDateTime,"%m/%d/%Y %I:%M:%S %p")-strptime(CreatedDateTime,"%m/%d/%Y %I:%M:%S %p"))/3600 | timechart avg(closureTime) | predict avg(closureTime)|rename avg(closureTime) as "Average Closure Time"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Closure Time (h)</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Average Incident Closure Time by Team (In Hours)</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:incident"  cherwell_instance="$cherwell_instance$" | dedup IncidentID | search Status=Closed IncidentType=Incident  | eval closureTime=(strptime(ClosedDateTime,"%m/%d/%Y %I:%M:%S %p")-strptime(CreatedDateTime,"%m/%d/%Y %I:%M:%S %p"))/3600 | eval Team=if( OwnedByTeam!="", OwnedByTeam,  "Unassigned" ) | chart avg(closureTime) as "Avg. Closure Time" by Team | sort - "Avg. Closure Time"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleY.text">Avg. Closure Time (h)</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Open Incidents by Team over Time</title>
+      <chart>
+        <search>
+          <query>`cherwell_index` sourcetype="cherwell:bo:incident"  cherwell_instance="$cherwell_instance$" | dedup IncidentID | search (IncidentType=Incident) AND (Status!="Closed" AND Status!="Resolved") | eval Team=if( OwnedByTeam!="", OwnedByTeam,  "Unassigned" ) | timechart span=1d dc(IncidentID) as Count by Team</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.chart">line</option>
+      </chart>
+    </panel>
+  </row>
+</form>

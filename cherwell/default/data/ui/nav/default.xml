@@ -1,0 +1,27 @@
+<nav search_view="search">
+  <view name="cherwell_overview" default='true'/>
+  <collection label="Incidents">
+    <view name="cherwell_incident_summary"/>
+    <view name="cherwell_incident_analysis"/>
+    <view name="cherwell_splunk_created_incidents"/>
+    <view name="cherwell_incident_details" />
+  </collection>
+  <collection label="Changes">
+    <view name="cherwell_change_request_summary"/>
+    <view name="cherwell_change_request_analysis"/>
+    <view name="cherwell_change_request_details"/>
+  </collection>
+   <collection label="Problems">
+    <view name="cherwell_problem_summary"/>
+    <view name="cherwell_problem_details"/>
+  </collection>
+   <collection label="Tasks">
+    <view name="cherwell_task_summary"/>
+    <view name="cherwell_task_details"/>
+  </collection>
+  <collection label="CMDB">
+    <view name="cherwell_cmdb_summary" />
+    <view name="cherwell_cmdb_details" />
+  </collection>
+  <view name="search" />
+</nav>
